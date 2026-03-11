@@ -1,0 +1,115 @@
+{
+  "name": "top_10_news_to_excel",
+  "nodes": [
+    {
+      "parameters": {
+        "url": "https://newsapi.org/v2/top-headlines?country=us&apiKey=YOUR_NEWSAPI_KEY",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [208, 0],
+      "id": "fe53a5d4-3175-4ad3-a869-40c51e682c1f",
+      "name": "HTTP Request"
+    },
+    {
+      "parameters": {
+        "fieldToSplitOut": "articles",
+        "include": "allOtherFields",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.splitOut",
+      "typeVersion": 1,
+      "position": [416, 0],
+      "id": "64f4e071-23c2-45fc-b906-ab8a341fdd64",
+      "name": "Split Out"
+    },
+    {
+      "parameters": {
+        "maxItems": 10
+      },
+      "type": "n8n-nodes-base.limit",
+      "typeVersion": 1,
+      "position": [624, 0],
+      "id": "b43abc84-7030-4720-b276-07b9820e87e0",
+      "name": "Limit"
+    },
+    {
+      "parameters": {
+        "operation": "xlsx",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.convertToFile",
+      "typeVersion": 1.1,
+      "position": [832, 0],
+      "id": "5be7ee10-6d90-4ee3-8074-f0a68d639d92",
+      "name": "Convert to File"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://YOUR_SUPABASE_PROJECT_ID.supabase.co/storage/v1/object/top-News/file.xlsx",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "supabaseApi",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "x-upsert",
+              "value": "true"
+            }
+          ]
+        },
+        "sendBody": true,
+        "contentType": "binaryData",
+        "inputDataFieldName": "data",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [1040, 0],
+      "id": "dd2b0096-15c0-4962-8941-6c19143baa08",
+      "name": "HTTP Request1",
+      "credentials": {
+        "supabaseApi": {
+          "id": "YOUR_SUPABASE_CREDENTIAL_ID",
+          "name": "Supabase account"
+        }
+      }
+    },
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [0, 0],
+      "id": "c51c284a-d088-4123-b196-3d5852145012",
+      "name": "When clicking 'Execute workflow'"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "HTTP Request": {
+      "main": [[{"node": "Split Out", "type": "main", "index": 0}]]
+    },
+    "Split Out": {
+      "main": [[{"node": "Limit", "type": "main", "index": 0}]]
+    },
+    "Limit": {
+      "main": [[{"node": "Convert to File", "type": "main", "index": 0}]]
+    },
+    "Convert to File": {
+      "main": [[{"node": "HTTP Request1", "type": "main", "index": 0}]]
+    },
+    "When clicking 'Execute workflow'": {
+      "main": [[{"node": "HTTP Request", "type": "main", "index": 0}]]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate",
+    "availableInMCP": false
+  },
+  "meta": {},
+  "tags": []
+}
