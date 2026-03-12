@@ -1,0 +1,243 @@
+{
+  "name": "Search Engine with AI Agent",
+  "nodes": [
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.chatTrigger",
+      "typeVersion": 1.4,
+      "position": [
+        0,
+        0
+      ],
+      "id": "45159c4a-66dc-42de-9003-cffe2a441bae",
+      "name": "When chat message received",
+      "webhookId": "YOUR_WEBHOOK_ID"
+    },
+    {
+      "parameters": {
+        "options": {
+          "systemMessage": "You are an orchestrator agent.\n\nRules:\n- Use tools when available.\n- Never answer from memory if a tool can be used.\n- Only call tools that appear in the provided tool list.\n- Use tool names exactly as listed.\n- Do not invent tool names.\n\nFor information or reports:\n\n1. Call the search tool once.\n2. Call web_scraper on a selected result.\n3. Summarize the scraped content.\n4. Call file_generator with:\n   content = summary (plain string)\n   filename = short descriptive name\n\nStop after file_generator succeeds.\n",
+          "maxIterations": 4
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 3.1,
+      "position": [
+        208,
+        0
+      ],
+      "id": "ba0bb8eb-f045-4701-bcb9-e76ab680bc30",
+      "name": "AI Agent"
+    },
+    {
+      "parameters": {},
+      "type": "@n8n/n8n-nodes-langchain.memoryBufferWindow",
+      "typeVersion": 1.3,
+      "position": [
+        240,
+        288
+      ],
+      "id": "0c69f028-df73-40ee-890b-cd5d0c7ee50d",
+      "name": "Simple Memory"
+    },
+    {
+      "parameters": {
+        "operation": "scrape",
+        "url": "={{ $fromAI(\"url\", \"The exact URL to scrape starting with http or https\", \"string\") }}",
+        "scrapeOptions": {
+          "options": {
+            "formats": {
+              "format": [
+                {}
+              ]
+            },
+            "headers": {}
+          }
+        },
+        "requestOptions": {}
+      },
+      "type": "@mendable/n8n-nodes-firecrawl.firecrawlTool",
+      "typeVersion": 1,
+      "position": [
+        608,
+        224
+      ],
+      "id": "23845089-8bf6-4843-930e-beb8b8eeefb6",
+      "name": "web_scraper",
+      "credentials": {
+        "firecrawlApi": {
+          "id": "YOUR_FIRECRAWL_CREDENTIAL_ID",
+          "name": "Firecrawl account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "description": "Use this tool ONLY after you have completed the research and scraping. This tool takes the final summary text and saves it into a permanent Excel file in the Virtual OS storage. Input must be a string containing the research summary",
+        "workflowId": {
+          "__rl": true,
+          "value": "YOUR_SUBWORKFLOW_ID",
+          "mode": "list",
+          "cachedResultUrl": "/workflow/YOUR_SUBWORKFLOW_ID",
+          "cachedResultName": "My Sub-Workflow 1"
+        },
+        "workflowInputs": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "content": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('content', ``, 'string') }}"
+          },
+          "matchingColumns": [
+            "content"
+          ],
+          "schema": [
+            {
+              "id": "content",
+              "displayName": "content",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "string",
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.toolWorkflow",
+      "typeVersion": 2.2,
+      "position": [
+        432,
+        224
+      ],
+      "id": "7b98213d-c764-4eef-80dc-8a36f7678807",
+      "name": "file_generator"
+    },
+    {
+      "parameters": {
+        "options": {
+          "google_domain": "google.com"
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.toolSerpApi",
+      "typeVersion": 1,
+      "position": [
+        784,
+        160
+      ],
+      "id": "ae7a5ce5-56cc-4908-b957-5184f95f361b",
+      "name": "Google Search",
+      "credentials": {
+        "serpApi": {
+          "id": "YOUR_SERPAPI_CREDENTIAL_ID",
+          "name": "SerpAPI account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "model": "llama-3.3-70b-versatile",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatGroq",
+      "typeVersion": 1,
+      "position": [
+        80,
+        208
+      ],
+      "id": "6c84dabf-e326-466a-b27d-ec2fc662249c",
+      "name": "Groq Chat Model",
+      "credentials": {
+        "groqApi": {
+          "id": "YOUR_GROQ_CREDENTIAL_ID",
+          "name": "Groq account"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "When chat message received": {
+      "main": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Simple Memory": {
+      "ai_memory": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_memory",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "web_scraper": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "file_generator": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Google Search": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Groq Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate",
+    "availableInMCP": false
+  },
+  "versionId": "dc7c068b-cbe9-4ee7-b1ee-69a0a57c6743",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "YOUR_INSTANCE_ID"
+  },
+  "id": "YOUR_WORKFLOW_ID",
+  "tags": []
+}
